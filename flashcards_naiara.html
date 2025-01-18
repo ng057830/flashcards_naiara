@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Flashcards Matemáticas - Naiara</title>
+    <!-- Configuración de MathJax -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+            ["$", "$"],
+            ["\\(", "\\)"],
+          ],
+          displayMath: [
+            ["$$", "$$"],
+            ["\\[", "\\]"],
+          ],
+        },
+        options: {
+          skipHtmlTags: ["script", "noscript", "style", "textarea", "pre"],
+        },
+      };
+    </script>
+    <!-- Incluir MathJax desde CDN -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js"
+      async
+    ></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      :root {
+        --primary-color: #8a2be2;
+        --secondary-color: #ff69b4;
+        --background-color: #f8f9fa;
+        --text-color: #2c3e50;
+        --card-background: #ffffff;
+        --timer-color: #ff69b4;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+      }
+
+      body {
+        font-family: "Segoe UI", "Arial", sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.4; /* Reducido para menor interlineado */
+      }
+
+      .welcome-screen {
+        text-align: center;
+        max-width: 600px;
+        padding: 40px;
+        background: var(--card-background);
+        border-radius: 20px;
+        box-shadow: 0 8px 16px var(--shadow-color);
+        animation: fadeIn 0.5s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .flashcard-container {
+        display: none;
+        width: 100%;
+        max-width: 600px;
+        margin: 20px auto;
+      }
+
+      .timer {
+        font-size: 1.5rem;
+        color: var(--timer-color);
+        margin-bottom: 1rem;
+        text-align: center;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .flashcard {
+        perspective: 1000px;
+        width: 100%;
+        aspect-ratio: 16 / 10; /* Mantiene una relación de aspecto 4:3 */
+        position: relative;
+        cursor: not-allowed;
+        margin-bottom: 1.5rem;
+      }
+
+      .flashcard-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-style: preserve-3d;
+      }
+
+      .flashcard.flipped .flashcard-inner {
+        transform: rotateY(180deg);
+      }
+
+      .flashcard-front,
+      .flashcard-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+        background: var(--card-background);
+        border-radius: 20px;
+        box-shadow: 0 8px 16px var(--shadow-color);
+        overflow: hidden; /* Evita barras de desplazamiento */
+      }
+
+      .flashcard-front h2,
+      .flashcard-back h2 {
+        color: var(--primary-color);
+        margin-bottom: 1rem; /* Reducido para menor espacio */
+        font-size: 1.6rem; /* Ajustado para mejor legibilidad */
+        text-align: center;
+        width: 100%;
+      }
+
+      .flashcard-content, .flashcard-explanation {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        text-align: center;
+        font-size: 1.1rem; /* Reducido para mejor ajuste */
+      }
+
+      .latex-content {
+        margin: 0.8rem auto; /* Reducido el margen */
+        padding: 0.5rem;
+        text-align: center;
+        width: 100%;
+        font-size: 1rem; /* Reducido para menor interlineado */
+      }
+
+      .flashcard-back {
+        transform: rotateY(180deg);
+        background: linear-gradient(145deg, var(--card-background), #f8f9fa);
+      }
+
+      .navigation {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+
+      button {
+        padding: 0.6rem 1.2rem; /* Reducido para mejor ajuste */
+        font-size: 0.95rem; /* Reducido para menor tamaño */
+        border: none;
+        border-radius: 25px;
+        background: linear-gradient(
+          45deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.9;
+        box-shadow: 0 4px 6px var(--shadow-color);
+      }
+
+      button.active {
+        opacity: 1;
+        transform: translateY(-2px);
+      }
+
+      button:hover.active {
+        opacity: 0.95;
+        transform: translateY(-1px);
+      }
+
+      .progress {
+        margin-top: 1rem; /* Reducido para mejor ajuste */
+        text-align: center;
+      }
+
+      .progress-text {
+        font-size: 1rem; /* Reducido para mejor ajuste */
+        color: var(--primary-color);
+        margin-bottom: 0.3rem; /* Reducido el margen */
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 6px; /* Reducido la altura */
+        background-color: #eee;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 0.3rem; /* Reducido el margen */
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(
+          45deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        border-radius: 10px;
+        width: 0%;
+        transition: width 0.5s ease-in-out;
+      }
+
+      .motivation {
+        margin-top: 1rem; /* Reducido para mejor ajuste */
+        color: var(--secondary-color);
+        font-size: 1rem; /* Reducido para menor tamaño */
+        font-weight: 500;
+        text-align: center;
+        animation: bounce 1s ease infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-5px);
+        }
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 1rem;
+        }
+
+        .flashcard {
+          aspect-ratio: 3 / 4; /* Cambia la relación de aspecto para pantallas más pequeñas si es necesario */
+        }
+
+        .flashcard-front h2,
+        .flashcard-back h2 {
+          font-size: 1.4rem; /* Ajustado para pantallas pequeñas */
+        }
+
+        .latex-content {
+          font-size: 0.95rem; /* Ajustado para pantallas pequeñas */
+        }
+
+        button {
+          padding: 0.5rem 1rem; /* Reducido para pantallas pequeñas */
+          font-size: 0.85rem; /* Reducido para pantallas pequeñas */
+        }
+
+        .flashcard-content {
+          font-size: 0.95rem; /* Reducido para pantallas pequeñas */
+        }
+
+        .flashcard-front,
+        .flashcard-back {
+          padding: 1rem; /* Reducido para pantallas pequeñas */
+        }
+
+        .progress-text {
+          font-size: 0.95rem; /* Reducido para pantallas pequeñas */
+        }
+
+        .progress-bar {
+          height: 5px; /* Reducido para pantallas pequeñas */
+        }
+
+        .motivation {
+          font-size: 0.95rem; /* Reducido para pantallas pequeñas */
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="welcome-screen" id="welcomeScreen">
+      <h1>¡Hola Naiara! 🌟</h1>
+      <p>
+        Vamos a repasar conceptos clave de Matemáticas de una forma dinámica.
+      </p>
+      <p>
+        Tienes 5 segundos para pensar en cada pregunta antes de ver la
+        respuesta.
+      </p>
+      <button onclick="startFlashcards()">¡Comenzar a Practicar! 🚀</button>
+    </div>
+
+    <div class="flashcard-container" id="flashcardContainer">
+      <div class="timer" id="timer">10</div>
+      <div class="flashcard" id="flashcard">
+        <div class="flashcard-inner">
+          <div class="flashcard-front">
+            <div class="flashcard-content">
+              <!-- Contenido dinámico (Frente) -->
+            </div>
+          </div>
+          <div class="flashcard-back">
+            <div class="flashcard-content">
+              <!-- Contenido dinámico (Reverso) -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="navigation">
+        <button onclick="previousCard()" id="prevButton" style="display: none">
+          ← Anterior
+        </button>
+        <button onclick="nextCard()" id="nextButton" style="display: none">
+          Siguiente →
+        </button>
+      </div>
+      <div class="progress">
+        <div class="progress-text" id="progressText">Tarjeta 1 de 30</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+      <div class="motivation" id="motivation"></div>
+    </div>
+
+    <script>
+      // Datos de las flashcards
+      const flashcards = [
+  // Operaciones con Raíces
+  {
+    front: {
+      title: "Simplificación de Raíces Cuadradas",
+      content: "Simplifica la siguiente expresión:<br><br>$$\\sqrt{72}$$",
+    },
+    back: {
+      explanation:
+        "Para simplificar una raíz cuadrada, buscamos el mayor cuadrado perfecto que divida al radicando:",
+      math: [
+        "$$72 = 36 \\cdot 2$$",
+        "$$\\sqrt{72} = \\sqrt{36 \\cdot 2} = \\sqrt{36} \\cdot \\sqrt{2} = 6\\sqrt{2}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Multiplicación de Raíces Cuadradas",
+      content:
+        "Calcula el resultado de:<br><br>$$\\sqrt{5} \\cdot \\sqrt{20}$$",
+    },
+    back: {
+      explanation:
+        "Para multiplicar raíces del mismo índice, multiplicamos los radicandos y simplificamos:",
+      math: [
+        "$$\\sqrt{5} \\cdot \\sqrt{20} = \\sqrt{5 \\cdot 20} = \\sqrt{100} = 10$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "División de Raíces Cuadradas",
+      content:
+        "Resuelve la siguiente división:<br><br>$$\\frac{\\sqrt{50}}{\\sqrt{2}}$$",
+    },
+    back: {
+      explanation:
+        "Para dividir raíces del mismo índice, dividimos los radicandos y simplificamos:",
+      math: [
+        "$$\\frac{\\sqrt{50}}{\\sqrt{2}} = \\sqrt{\\frac{50}{2}} = \\sqrt{25} = 5$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Racionalización de Denominadores",
+      content:
+        "Racionaliza el denominador de la siguiente fracción:<br><br>$$\\frac{7}{\\sqrt{3}}$$",
+    },
+    back: {
+      explanation:
+        "Para racionalizar, multiplicamos numerador y denominador por la raíz del denominador:",
+      math: [
+        "$$\\frac{7}{\\sqrt{3}} \\cdot \\frac{\\sqrt{3}}{\\sqrt{3}} = \\frac{7\\sqrt{3}}{3}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Simplificación de Raíces de Índice Superior",
+      content: "Simplifica la expresión:<br><br>$$\\sqrt[3]{54}$$",
+    },
+    back: {
+      explanation:
+        "Para simplificar una raíz cúbica, buscamos el mayor cubo perfecto que divida al radicando:",
+      math: [
+        "$$54 = 27 \\cdot 2$$",
+        "$$\\sqrt[3]{54} = \\sqrt[3]{27 \\cdot 2} = \\sqrt[3]{27} \\cdot \\sqrt[3]{2} = 3\\sqrt[3]{2}$$",
+      ],
+    },
+  },
+  // Operaciones con Fracciones
+  {
+    front: {
+      title: "Simplificación de Fracciones",
+      content: "Simplifica la siguiente fracción:<br><br>$$\\frac{36}{48}$$",
+    },
+    back: {
+      explanation:
+        "Encontramos el MCD y dividimos numerador y denominador:",
+      math: [
+        "$$MCD(36, 48) = 12$$",
+        "$$\\frac{36}{48} = \\frac{36 \\div 12}{48 \\div 12} = \\frac{3}{4}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Suma de Fracciones con Diferente Denominador",
+      content: "Calcula:<br><br>$$\\frac{3}{7} + \\frac{2}{5}$$",
+    },
+    back: {
+      explanation:
+        "Buscamos un denominador común y sumamos los numeradores:",
+      math: [
+        "$$\\frac{3}{7} = \\frac{15}{35}$$",
+        "$$\\frac{2}{5} = \\frac{14}{35}$$",
+        "$$\\frac{15}{35} + \\frac{14}{35} = \\frac{29}{35}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Multiplicación de Fracciones",
+      content:
+        "Multiplica las siguientes fracciones:<br><br>$$\\frac{4}{9} \\cdot \\frac{3}{8}$$",
+    },
+    back: {
+      explanation:
+        "Multiplicamos numeradores y denominadores directamente:",
+      math: [
+        "$$\\frac{4}{9} \\cdot \\frac{3}{8} = \\frac{4 \\cdot 3}{9 \\cdot 8} = \\frac{12}{72} = \\frac{1}{6}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "División de Fracciones",
+      content:
+        "Divide las siguientes fracciones:<br><br>$$\\frac{5}{12} ÷ \\frac{5}{8}$$",
+    },
+    back: {
+      explanation:
+        "Dividir fracciones es lo mismo que multiplicar por el recíproco:",
+      math: [
+        "$$\\frac{5}{12} ÷ \\frac{5}{8} = \\frac{5}{12} \\cdot \\frac{8}{5} = \\frac{40}{60} = \\frac{2}{3}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Suma de Fracciones con Mismo Denominador",
+      content: "Calcula:<br><br>$$\\frac{7}{10} + \\frac{2}{10}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos directamente los numeradores ya que los denominadores son iguales:",
+      math: [
+        "$$\\frac{7}{10} + \\frac{2}{10} = \\frac{9}{10}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Fracción de una Fracción",
+      content: "Calcula:<br><br>$$\\frac{1}{2} \\cdot \\frac{3}{4}$$",
+    },
+    back: {
+      explanation:
+        "Multiplicamos numeradores y denominadores:",
+      math: [
+        "$$\\frac{1}{2} \\cdot \\frac{3}{4} = \\frac{1 \\cdot 3}{2 \\cdot 4} = \\frac{3}{8}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Simplificación de Fracciones Irreducibles",
+      content: "Simplifica la siguiente fracción:<br><br>$$\\frac{14}{21}$$",
+    },
+    back: {
+      explanation:
+        "Encontramos el MCD y dividimos numerador y denominador:",
+      math: [
+        "$$MCD(14, 21) = 7$$",
+        "$$\\frac{14}{21} = \\frac{14 \\div 7}{21 \\div 7} = \\frac{2}{3}$$",
+      ],
+    },
+  },
+  // Propiedades de Potenciación
+  {
+    front: {
+      title: "Potencia de un Producto",
+      content:
+        "Simplifica la siguiente expresión:<br><br>$$\\left(a \\cdot b\\right)^n$$",
+    },
+    back: {
+      explanation:
+        "Al elevar un producto a una potencia, elevamos cada factor por separado:",
+      math: [
+        "$$\\left(a \\cdot b\\right)^n = a^n \\cdot b^n$$",
+        "$$\\left(2 \\cdot 3\\right)^2 = 2^2 \\cdot 3^2 = 4 \\cdot 9 = 36$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de un Cociente",
+      content:
+        "Simplifica la siguiente expresión:<br><br>$$\\left(\\frac{a}{b}\\right)^n$$",
+    },
+    back: {
+      explanation:
+        "Al elevar un cociente a una potencia, elevamos numerador y denominador por separado:",
+      math: [
+        "$$\\left(\\frac{a}{b}\\right)^n = \\frac{a^n}{b^n}$$",
+        "$$\\left(\\frac{2}{3}\\right)^2 = \\frac{4}{9}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Producto de Potencias con la Misma Base",
+      content:
+        "Simplifica la siguiente expresión:<br><br>$$a^m \\cdot a^n$$",
+    },
+    back: {
+      explanation:
+        "Al multiplicar potencias con la misma base, sumamos los exponentes:",
+      math: [
+        "$$a^m \\cdot a^n = a^{m + n}$$",
+        "$$2^3 \\cdot 2^2 = 2^{5} = 32$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Cociente de Potencias con la Misma Base",
+      content:
+        "Simplifica la siguiente expresión:<br><br>$$\\frac{a^m}{a^n}$$",
+    },
+    back: {
+      explanation:
+        "Al dividir potencias con la misma base, restamos los exponentes:",
+      math: [
+        "$$\\frac{a^m}{a^n} = a^{m - n}$$",
+        "$$\\frac{5^4}{5^2} = 5^{2} = 25$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Potencia",
+      content:
+        "Simplifica la siguiente expresión:<br><br>$$\\left(a^m\\right)^n$$",
+    },
+    back: {
+      explanation:
+        "Al elevar una potencia a otra potencia, multiplicamos los exponentes:",
+      math: [
+        "$$\\left(a^m\\right)^n = a^{m \\cdot n}$$",
+        "$$\\left(2^3\\right)^2 = 2^{6} = 64$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Exponente Negativo",
+      content: "Simplifica la siguiente expresión:<br><br>$$a^{-n}$$",
+    },
+    back: {
+      explanation:
+        "Un exponente negativo indica el recíproco de la base elevada al exponente positivo:",
+      math: [
+        "$$a^{-n} = \\frac{1}{a^n}$$",
+        "$$2^{-3} = \\frac{1}{8}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de Raíz",
+      content:
+        "Expresa la siguiente raíz como una potencia:<br><br>$$\\sqrt[n]{a}$$",
+    },
+    back: {
+      explanation:
+        "Una raíz puede expresarse como una potencia fraccionaria:",
+      math: [
+        "$$\\sqrt[n]{a} = a^{1/n}$$",
+        "$$\\sqrt{8} = 8^{1/2}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Raíz Elevada a una Potencia",
+      content:
+        "Simplifica la siguiente expresión:<br><br>$$\\left(\\sqrt[n]{a}\\right)^m$$",
+    },
+    back: {
+      explanation:
+        "Al elevar una raíz a una potencia, multiplicamos los exponentes:",
+      math: [
+        "$$\\left(\\sqrt[n]{a}\\right)^m = a^{m/n}$$",
+        "$$\\left(\\sqrt{2}\\right)^3 = 2^{3/2} = \\sqrt{8} = 2\\sqrt{2}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de Potencia con Producto",
+      content:
+        "Simplifica la siguiente expresión:<br><br>$$\\left(a^m \\cdot b^n\\right)^p$$",
+    },
+    back: {
+      explanation:
+        "Al elevar un producto de potencias a una potencia, cada factor se eleva a esa potencia:",
+      math: [
+        "$$\\left(a^m \\cdot b^n\\right)^p = a^{m \\cdot p} \\cdot b^{n \\cdot p}$$",
+        "$$\\left(2^2 \\cdot 3^3\\right)^2 = 2^{4} \\cdot 3^{6} = 16 \\cdot 729 = 11664$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de 1",
+      content: "Simplifica la siguiente expresión:<br><br>$$a^0$$",
+    },
+    back: {
+      explanation:
+        "Cualquier número distinto de cero elevado a la potencia cero es igual a uno:",
+      math: [
+        "$$a^0 = 1$$",
+        "$$5^0 = 1$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Multiplicación de Potencias con Diferentes Bases",
+      content:
+        "Simplifica la siguiente expresión si es posible:<br><br>$$a^m \\cdot b^n$$",
+    },
+    back: {
+      explanation:
+        "Las potencias con diferentes bases no se pueden simplificar a una sola base. Se mantienen separadas:",
+      math: [
+        "$$a^m \\cdot b^n$$",
+        "$$2^3 \\cdot 3^2 = 8 \\cdot 9 = 72$$",
+      ],
+    },
+  },
+  // Potencias de Fracciones
+  {
+    front: {
+      title: "Potencia de una Fracción",
+      content:
+        "Calcula la potencia de la siguiente fracción:<br><br>$$\\left(\\frac{2}{3}\\right)^3$$",
+    },
+    back: {
+      explanation:
+        "Al elevar una fracción a una potencia, elevamos numerador y denominador por separado:",
+      math: [
+        "$$\\left(\\frac{2}{3}\\right)^3 = \\frac{2^3}{3^3} = \\frac{8}{27}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Simplificación de Potencias con Fracciones",
+      content: "Simplifica la siguiente expresión:<br><br>$$\\frac{a^4}{a^2}$$",
+    },
+    back: {
+      explanation:
+        "Al dividir potencias con la misma base, restamos los exponentes:",
+      math: [
+        "$$\\frac{a^4}{a^2} = a^{4-2} = a^2$$",
+        "$$\\frac{5^4}{5^2} = 5^{2} = 25$$",
+      ],
+    },
+  },
+  // Proporcionalidad
+  {
+    front: {
+      title: "Definición de Proporcionalidad",
+      content:
+        "¿Qué es una proporción? Escribe un ejemplo utilizando letras.",
+    },
+    back: {
+      explanation:
+        "Una proporción es una igualdad entre dos razones. Se representa como $$\\frac{a}{b} = \\frac{c}{d}$$",
+      math: [
+        "Ejemplo: $$\\frac{2}{3} = \\frac{4}{6}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Resolver Proporciones",
+      content:
+        "Resuelve la proporción:<br><br>$$\\frac{5}{x} = \\frac{10}{20}$$",
+    },
+    back: {
+      explanation:
+        "Aplicamos el producto cruzado para resolver la proporción:",
+      math: [
+        "$$5 \\cdot 20 = 10 \\cdot x$$",
+        "$$100 = 10x$$",
+        "$$x = 10$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Proporcionalidad Directa",
+      content:
+        "Si $y$ es directamente proporcional a $x$ y $y=15$ cuando $x=3$, ¿cuál es $y$ cuando $x=5$?",
+    },
+    back: {
+      explanation:
+        "En proporcionalidad directa, usamos $y = kx$. <br>Primero encontramos $k$:",
+      math: [
+        "$$15 = k \\cdot 3$$",
+        "$$k = 5$$",
+        "Entonces: $$y = 5 \\cdot 5 = 25$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Proporcionalidad Inversa",
+      content:
+        "Si $y$ es inversamente proporcional a $x$ y $y=8$ cuando $x=2$, ¿cuál es $y$ cuando $x=4$?",
+    },
+    back: {
+      explanation:
+        "En proporcionalidad inversa, usamos $$y = \\frac{k}{x}$$ Primero encontramos $k$:",
+      math: [
+        "$$8 = \\frac{k}{2}$$",
+        "$$k = 16$$",
+        "Entonces: $y = \\frac{16}{4} = 4$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Aplicación de Proporciones",
+      content:
+        "Si 5 manzanas cuestan 10 euros, ¿cuánto costarán 8 manzanas?",
+    },
+    back: {
+      explanation:
+        "Planteamos la proporción y resolvemos:",
+      math: [
+        "$$\\frac{5 \\text{ manzanas}}{10 \\text{ euros}} = \\frac{8 \\text{ manzanas}}{x \\text{ euros}}$$",
+        "$$5x = 80$$",
+        "$$x = 16 \\text{ euros}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Proporcionalidad Directa con Fracciones",
+      content:
+        "Si $y$ es directamente proporcional a $x$ y $y=4$ cuando $x=2$, ¿cuál es $y$ cuando $x=5$?",
+    },
+    back: {
+      explanation:
+        "Usamos $y = kx$. Primero encontramos $k$:",
+      math: [
+        "$$4 = k \\cdot 2$$",
+        "$$k = 2$$",
+        "Entonces: $$y = 2 \\cdot 5 = 10$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Proporcionalidad Inversa con Fracciones",
+      content:
+        "Si $y$ es inversamente proporcional a $x$ y $y=9$ cuando $x=3$, ¿cuál es $y$ cuando $x=6$?",
+    },
+    back: {
+      explanation:
+        "Usamos $y = \\frac{k}{x}$. <br>Primero encontramos $k$:",
+      math: [
+        "$$9 = \\frac{k}{3}$$",
+        "$$k = 27$$",
+        "Entonces: $y = \\frac{27}{6} = 4.5$",
+      ],
+    },
+  },
+  // Potencias Mixtas y Avanzadas
+  {
+    front: {
+      title: "Potencia con Exponentes Mixtos",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{1 + \\frac{1}{2}}$$",
+    },
+    back: {
+      explanation:
+        "Aplicamos las propiedades de las potencias sumando los exponentes:",
+      math: [
+        "$$\\left(a + b\\right)^{1 + \\frac{1}{2}} = \\left(a + b\\right)^1 \\cdot \\left(a + b\\right)^{\\frac{1}{2}}$$",
+        "$$= (a + b) \\cdot \\sqrt{a + b}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de Suma con Exponente Fraccionario y Negativo",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{-\\frac{2}{3}}$$",
+    },
+    back: {
+      explanation:
+        "Al elevar una suma a un exponente negativo y fraccionario, tomamos el recíproco y aplicamos la raíz:",
+      math: [
+        "$$\\left(a + b\\right)^{-\\frac{2}{3}} = \\frac{1}{\\left(a + b\\right)^{\\frac{2}{3}}} = \\frac{1}{\\sqrt[3]{(a + b)^2}}$$",
+        "Ejemplo con números: $$\\left(3 + 4\\right)^{-\\frac{2}{3}} = \\frac{1}{\\sqrt[3]{49}}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de Suma con Exponentes Fraccionarios",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{\\frac{3}{2}}$$",
+    },
+    back: {
+      explanation:
+        "Expresamos la potencia fraccionaria como una raíz y una potencia:",
+      math: [
+        "$$\\left(a + b\\right)^{\\frac{3}{2}} = \\sqrt{(a + b)^3}$$",
+        "Ejemplo con números: $$\\left(1 + 2\\right)^{\\frac{3}{2}} = \\sqrt{27} = 3\\sqrt{3}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de Raíz con Exponente Negativo",
+      content:
+        "Simplifica la siguiente expresión:<br><br>$$\\left(\\sqrt{a}\\right)^{-3}$$",
+    },
+    back: {
+      explanation:
+        "Expresamos la raíz como una potencia fraccionaria y aplicamos el exponente negativo:",
+      math: [
+        "$$\\left(\\sqrt{a}\\right)^{-3} = a^{-\\frac{3}{2}} = \\frac{1}{a^{\\frac{3}{2}}} = \\frac{1}{\\sqrt{a^3}} = \\frac{1}{a\\sqrt{a}}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Raíz con Producto de Exponentes",
+      content:
+        "Simplifica la siguiente expresión:<br><br>$$\\left(\\sqrt{a \\cdot b}\\right)^2$$",
+    },
+    back: {
+      explanation:
+        "Expresamos la raíz como una potencia fraccionaria y aplicamos la potencia:",
+      math: [
+        "$$\\left(\\sqrt{a \\cdot b}\\right)^2 = (a \\cdot b)^{1} = a \\cdot b$$",
+        "Ejemplo: $$\\left(\\sqrt{2 \\cdot 3}\\right)^2 = 6$$",
+      ],
+    },
+  },
+  // Potencias Avanzadas
+  {
+    front: {
+      title: "Potencia de una Suma con Exponentes Mixtos",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{1 + \\frac{1}{2}}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes y aplicamos la propiedad de las potencias:",
+      math: [
+        "$$\\left(a + b\\right)^{1 + \\frac{1}{2}} = \\left(a + b\\right)^1 \\cdot \\left(a + b\\right)^{\\frac{1}{2}} = (a + b) \\cdot \\sqrt{a + b}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Mixto y Negativo",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{-1 - \\frac{1}{2}}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes, tomamos el recíproco y aplicamos la raíz:",
+      math: [
+        "$$\\left(a + b\\right)^{-1 - \\frac{1}{2}} = \\frac{1}{\\left(a + b\\right)^{1 + \\frac{1}{2}}} = \\frac{1}{(a + b) \\cdot \\sqrt{a + b}}$$",
+        "Ejemplo con números: $$\\left(2 + 3\\right)^{-1 - \\frac{1}{2}} = \\frac{1}{5 \\cdot \\sqrt{5}} = \\frac{1}{5\\sqrt{5}}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponentes Fraccionarios y Negativos",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{-\\frac{3}{4}}$$",
+    },
+    back: {
+      explanation:
+        "Al elevar una suma a un exponente fraccionario y negativo, tomamos el recíproco y aplicamos la raíz:",
+      math: [
+        "$$\\left(a + b\\right)^{-\\frac{3}{4}} = \\frac{1}{\\left(a + b\\right)^{\\frac{3}{4}}} = \\frac{1}{\\sqrt[4]{(a + b)^3}}$$",
+        "Ejemplo con números: $$\\left(1 + 1\\right)^{-\\frac{3}{4}} = \\frac{1}{\\sqrt[4]{8}}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Raíz con Exponentes Mixtos",
+      content:
+        "Simplifica la siguiente expresión:<br><br>$$\\left(\\sqrt[3]{a}\\right)^{\\frac{3}{2}}$$",
+    },
+    back: {
+      explanation:
+        "Multiplicamos los exponentes y simplificamos:",
+      math: [
+        "$$\\left(\\sqrt[3]{a}\\right)^{\\frac{3}{2}} = a^{\\frac{3}{2} \\cdot \\frac{1}{3}} = a^{\\frac{1}{2}} = \\sqrt{a}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponentes Mixtos y Fraccionarios",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{\\frac{2}{3} + \\frac{1}{2}}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes y aplicamos las propiedades de las potencias:",
+      math: [
+        "$$\\frac{2}{3} + \\frac{1}{2} = \\frac{4 + 3}{6} = \\frac{7}{6}$$",
+        "$$\\left(a + b\\right)^{\\frac{7}{6}} = \\left(a + b\\right)^{1 + \\frac{1}{6}} = \\left(a + b\\right) \\cdot \\left(a + b\\right)^{\\frac{1}{6}}$$",
+      ],
+    },
+  },
+  // Más Potencias Avanzadas
+  {
+    front: {
+      title: "Potencia de una Suma con Exponentes Mixtos",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{2 + \\frac{1}{3}}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes y aplicamos las propiedades de las potencias:",
+      math: [
+        "$$2 + \\frac{1}{3} = \\frac{7}{3}$$",
+        "$$\\left(a + b\\right)^{\\frac{7}{3}} = \\left(a + b\\right)^2 \\cdot \\left(a + b\\right)^{\\frac{1}{3}}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Fraccionario",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{\\frac{4}{5}}$$",
+    },
+    back: {
+      explanation:
+        "Expresamos la potencia fraccionaria como una raíz y una potencia:",
+      math: [
+        "$$\\left(a + b\\right)^{\\frac{4}{5}} = \\sqrt[5]{(a + b)^4}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponentes Mixtos y Negativos",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{-1 - \\frac{1}{3}}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes, tomamos el recíproco y aplicamos la raíz:",
+      math: [
+        "$$-1 - \\frac{1}{3} = -\\frac{4}{3}$$",
+        "$$\\left(a + b\\right)^{-\\frac{4}{3}} = \\frac{1}{\\left(a + b\\right)^{\\frac{4}{3}}} = \\frac{1}{\\sqrt[3]{(a + b)^4}}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponentes Fraccionarios y Mixtos",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{\\frac{3}{2} + 2}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes y aplicamos las propiedades de las potencias:",
+      math: [
+        "$$\\frac{3}{2} + 2 = \\frac{7}{2}$$",
+        "$$\\left(a + b\\right)^{\\frac{7}{2}} = \\left(a + b\\right)^3 \\cdot \\left(a + b\\right)^{\\frac{1}{2}}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Raíz con Exponente Mixto",
+      content:
+        "Simplifica la siguiente expresión:<br><br>$$\\left(\\sqrt[4]{a}\\right)^{\\frac{3}{2}}$$",
+    },
+    back: {
+      explanation:
+        "Multiplicamos los exponentes y simplificamos:",
+      math: [
+        "$$\\left(\\sqrt[4]{a}\\right)^{\\frac{3}{2}} = a^{\\frac{3}{2} \\cdot \\frac{1}{4}} = a^{\\frac{3}{8}} = \\sqrt[8]{a^3}$$",
+      ],
+    },
+  },
+  // Potencias Repetidas y Combinadas
+  {
+    front: {
+      title: "Potencia de una Suma con Exponentes Mixtos",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{\\frac{5}{4} + 1}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes y aplicamos las propiedades de las potencias:",
+      math: [
+        "$$\\frac{5}{4} + 1 = \\frac{9}{4}$$",
+        "$$\\left(a + b\\right)^{\\frac{9}{4}} = \\left(a + b\\right)^2 \\cdot \\left(a + b\\right)^{\\frac{1}{4}}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Fraccionario",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{\\frac{2}{5}}$$",
+    },
+    back: {
+      explanation:
+        "Expresamos la potencia fraccionaria como una raíz y una potencia:",
+      math: [
+        "$$\\left(a + b\\right)^{\\frac{2}{5}} = \\sqrt[5]{(a + b)^2}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Mixto y Fraccionario",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{1 + \\frac{2}{3}}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes y aplicamos las propiedades de las potencias:",
+      math: [
+        "$$1 + \\frac{2}{3} = \\frac{5}{3}$$",
+        "$$\\left(a + b\\right)^{\\frac{5}{3}} = \\left(a + b\\right) \\cdot \\left(a + b\\right)^{\\frac{2}{3}}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Fraccionario y Negativo",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{-\\frac{1}{2}}$$",
+    },
+    back: {
+      explanation:
+        "Al elevar una suma a un exponente negativo y fraccionario, tomamos el recíproco y aplicamos la raíz:",
+      math: [
+        "$$\\left(a + b\\right)^{-\\frac{1}{2}} = \\frac{1}{\\left(a + b\\right)^{\\frac{1}{2}}} = \\frac{1}{\\sqrt{a + b}}$$",
+      ],
+    },
+  },
+  // Potencias Repetidas y Combinadas
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Mixto y Fraccionario",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{\\frac{4}{3} + \\frac{2}{5}}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes y aplicamos las propiedades de las potencias:",
+      math: [
+        "$$\\frac{4}{3} + \\frac{2}{5} = \\frac{20 + 6}{15} = \\frac{26}{15}$$",
+        "$$\\left(a + b\\right)^{\\frac{26}{15}} = \\left(a + b\\right)^{1 + \\frac{11}{15}} = \\left(a + b\\right) \\cdot \\left(a + b\\right)^{\\frac{11}{15}}$$",
+      ],
+    },
+  },
+  // Potencias con Propiedades Combinadas
+  {
+    front: {
+      title: "Potencia de una Suma con Exponentes Combinados",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{2 - \\frac{1}{4}}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes y aplicamos las propiedades de las potencias:",
+      math: [
+        "$$2 - \\frac{1}{4} = \\frac{7}{4}$$",
+        "$$\\left(a + b\\right)^{\\frac{7}{4}} = \\left(a + b\\right)^1 \\cdot \\left(a + b\\right)^{\\frac{3}{4}} = (a + b) \\cdot \\sqrt[4]{(a + b)^3}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Mixto y Fraccionario",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{\\frac{5}{6} + \\frac{1}{2}}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes y aplicamos las propiedades de las potencias:",
+      math: [
+        "$$\\frac{5}{6} + \\frac{1}{2} = \\frac{5}{6} + \\frac{3}{6} = \\frac{8}{6} = \\frac{4}{3}$$",
+        "$$\\left(a + b\\right)^{\\frac{4}{3}} = \\left(a + b\\right)^1 \\cdot \\left(a + b\\right)^{\\frac{1}{3}} = (a + b) \\cdot \\sqrt[3]{a + b}$$",
+      ],
+    },
+  },
+  // Últimas Potencias Avanzadas
+  {
+    front: {
+      title: "Potencia de una Raíz con Exponente Fraccionario",
+      content:
+        "Simplifica la siguiente expresión:<br><br>$$\\left(\\sqrt[5]{a}\\right)^{\\frac{4}{3}}$$",
+    },
+    back: {
+      explanation:
+        "Multiplicamos los exponentes y simplificamos:",
+      math: [
+        "$$\\left(\\sqrt[5]{a}\\right)^{\\frac{4}{3}} = a^{\\frac{4}{3} \\cdot \\frac{1}{5}} = a^{\\frac{4}{15}} = \\sqrt[15]{a^4}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Mixto y Fraccionario",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{\\frac{3}{4} + 1}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes y aplicamos las propiedades de las potencias:",
+      math: [
+        "$$\\frac{3}{4} + 1 = \\frac{7}{4}$$",
+        "$$\\left(a + b\\right)^{\\frac{7}{4}} = \\left(a + b\\right)^1 \\cdot \\left(a + b\\right)^{\\frac{3}{4}} = (a + b) \\cdot \\sqrt[4]{(a + b)^3}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponentes Avanzados",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{2 + \\frac{2}{5}}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes y aplicamos las propiedades de las potencias:",
+      math: [
+        "$$2 + \\frac{2}{5} = \\frac{12}{5}$$",
+        "$$\\left(a + b\\right)^{\\frac{12}{5}} = \\left(a + b\\right)^2 \\cdot \\left(a + b\\right)^{\\frac{2}{5}}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Mixto y Fraccionario",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{\\frac{6}{7} + \\frac{1}{3}}$$",
+    },
+    back: {
+      explanation:
+        "Sumamos los exponentes y aplicamos las propiedades de las potencias:",
+      math: [
+        "$$\\frac{6}{7} + \\frac{1}{3} = \\frac{18 + 7}{21} = \\frac{25}{21}$$",
+        "$$\\left(a + b\\right)^{\\frac{25}{21}} = \\left(a + b\\right)^1 \\cdot \\left(a + b\\right)^{\\frac{4}{21}}$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Fraccionario y Negativo",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{-\\frac{5}{6}}$$",
+    },
+    back: {
+      explanation:
+        "Al elevar una suma a un exponente fraccionario y negativo, tomamos el recíproco y aplicamos la raíz:",
+      math: [
+        "$$\\left(a + b\\right)^{-\\frac{5}{6}} = \\frac{1}{\\left(a + b\\right)^{\\frac{5}{6}}} = \\frac{1}{\\sqrt[6]{(a + b)^5}}$$",
+      ],
+    },
+  },
+  // Potencias Repetidas
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Repetido",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^{3}$$",
+    },
+    back: {
+      explanation:
+        "Aplicamos el Teorema del Binomio para expandir:",
+      math: [
+        "$$\\left(a + b\\right)^3 = a^3 + 3a^2b + 3ab^2 + b^3$$",
+        "Ejemplo: $$\\left(2 + 3\\right)^3 = 8 + 36 + 54 + 27 = 125$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Repetido",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^4$$",
+    },
+    back: {
+      explanation:
+        "Aplicamos el Teorema del Binomio para expandir:",
+      math: [
+        "$$\\left(a + b\\right)^4 = a^4 + 4a^3b + 6a^2b^2 + 4ab^3 + b^4$$",
+        "Ejemplo: $$\\left(1 + 2\\right)^4 = 1 + 8 + 24 + 32 + 16 = 81$$",
+      ],
+    },
+  },
+  {
+    front: {
+      title: "Potencia de una Suma con Exponente Repetido",
+      content:
+        "Simplifica la siguiente expresión (si es posible):<br><br>$$\\left(a + b\\right)^2$$",
+    },
+    back: {
+      explanation:
+        "Aplicamos el Teorema del Binomio para expandir:",
+      math: [
+        "$$\\left(a + b\\right)^2 = a^2 + 2ab + b^2$$",
+        "Ejemplo: $$\\left(3 + 4\\right)^2 = 9 + 24 + 16 = 49$$",
+      ],
+    },
+  },
+];
+      let currentCard = 0;
+      let isFlipped = false;
+      let timer;
+      let timeLeft = 5; // Restaurado a 10 segundos
+      let canFlip = false;
+
+      // Inicia la sesión de flashcards
+      function startFlashcards() {
+        document.getElementById("welcomeScreen").style.display = "none";
+        document.getElementById("flashcardContainer").style.display = "block";
+        document.getElementById(
+          "progressText"
+        ).textContent = `Tarjeta 1 de ${flashcards.length}`;
+        document.getElementById("progressFill").style.width = "0%";
+        displayCard(currentCard);
+        startTimer();
+      }
+
+      // Manejo del temporizador de 10 segundos
+      function startTimer() {
+        timeLeft = 5;
+        canFlip = false;
+        isFlipped = false; // Restablecer el estado de volteo
+        document.getElementById(
+          "timer"
+        ).textContent = `Tiempo restante: ${timeLeft}s`;
+        document.getElementById("flashcard").style.cursor = "not-allowed";
+        document.getElementById("prevButton").style.display = "none";
+        document.getElementById("nextButton").style.display = "none";
+
+        if (timer) clearInterval(timer);
+
+        timer = setInterval(() => {
+          timeLeft--;
+          if (timeLeft > 0) {
+            document.getElementById(
+              "timer"
+            ).textContent = `Tiempo restante: ${timeLeft}s`;
+          } else {
+            clearInterval(timer);
+            canFlip = true;
+            document.getElementById("flashcard").style.cursor = "pointer";
+            document.getElementById(
+              "timer"
+            ).textContent = `¡Puedes girar la tarjeta!`;
+          }
+        }, 1000);
+      }
+
+      // Muestra la tarjeta correspondiente
+      function displayCard(index) {
+        const card = flashcards[index];
+        const front = document.querySelector(
+          ".flashcard-front .flashcard-content"
+        );
+        const back = document.querySelector(
+          ".flashcard-back .flashcard-content"
+        );
+
+        // Contenido del frente
+        front.innerHTML = `
+                <h2>${card.front.title}</h2>
+                <div class="latex-content">${card.front.content}</div>
+            `;
+
+        // Contenido del reverso
+        back.innerHTML = `
+                <h2>Respuesta</h2>
+                <div class="latex-content">${card.back.explanation}</div>
+                ${card.back.math
+                  .map(
+                    (item) => `
+                        <div class="latex-content">${item}</div>
+                    `
+                  )
+                  .join("")}
+            `;
+
+        // Restablecer el estado de la tarjeta
+        const flashcard = document.getElementById("flashcard");
+        flashcard.classList.remove("flipped");
+        isFlipped = false;
+
+        // Actualizar progreso
+        document.getElementById("progressText").textContent = `Tarjeta ${
+          index + 1
+        } de ${flashcards.length}`;
+        const progressPercentage = ((index + 1) / flashcards.length) * 100;
+        document.getElementById(
+          "progressFill"
+        ).style.width = `${progressPercentage}%`;
+
+        // Limpiar motivación
+        document.getElementById("motivation").textContent = "";
+
+        // Forzar el renderizado de MathJax en la tarjeta actual
+        MathJax.typesetPromise([front, back]).then(() => {
+          // Render completo
+        });
+      }
+
+      // Voltea la tarjeta al hacer clic (solo tras 10s)
+      function flipCard() {
+        if (canFlip) {
+          const flashcard = document.getElementById("flashcard");
+          flashcard.classList.toggle("flipped");
+          isFlipped = !isFlipped;
+
+          if (isFlipped) {
+            document.getElementById("motivation").textContent =
+              "¡Excelente! Continúa aprendiendo.";
+            // Mostrar los botones de navegación
+            document.getElementById("prevButton").style.display =
+              "inline-block";
+            document.getElementById("nextButton").style.display =
+              "inline-block";
+
+            // Deshabilitar botones si es necesario
+            document.getElementById("prevButton").disabled = currentCard === 0;
+            document.getElementById("nextButton").disabled =
+              currentCard === flashcards.length - 1;
+          } else {
+            document.getElementById("motivation").textContent = "";
+            // Ocultar navegación
+            document.getElementById("prevButton").style.display = "none";
+            document.getElementById("nextButton").style.display = "none";
+          }
+        }
+      }
+
+      // Funciones para avanzar y retroceder tarjetas
+      function nextCard() {
+        if (currentCard < flashcards.length - 1) {
+          currentCard++;
+          displayCard(currentCard);
+          startTimer();
+        }
+      }
+
+      function previousCard() {
+        if (currentCard > 0) {
+          currentCard--;
+          displayCard(currentCard);
+          startTimer();
+        }
+      }
+
+      // Evento para voltear la tarjeta al hacer clic
+      document
+        .getElementById("flashcard")
+        .addEventListener("click", flipCard);
+    </script>
+  </body>
+</html>
+
+
